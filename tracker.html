@@ -84,6 +84,14 @@
   .substep.inprog .schk::after{content:"";position:absolute;width:11px;height:11px;border-radius:50%;background:var(--yellow);}
   .ipill{font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.05em;color:var(--navy);background:var(--yellow);border-radius:5px;padding:3px 9px;white-space:nowrap;}
   .sipill{flex:0 0 auto;font-family:var(--display);font-weight:700;font-size:9px;letter-spacing:.05em;color:var(--navy);background:var(--yellow);border-radius:4px;padding:2px 7px;margin-top:2px;white-space:nowrap;}
+  /* explicit In progress / Done buttons */
+  .statetoggle{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .stbtn{font-family:var(--display);font-weight:700;font-size:12.5px;border-radius:8px;padding:8px 15px;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);transition:.12s;}
+  .stbtn:hover{border-color:var(--navy-soft);color:var(--navy);}
+  .stbtn.prog.on{background:var(--yellow);border-color:var(--yellow);color:var(--navy);}
+  .stbtn.done.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .substep .statetoggle{margin-top:11px;}
+  .substep .stbtn{font-size:11.5px;padding:6px 12px;}
   /* publish controls */
   .pubbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 10px;}
   .pubbtn{font-family:var(--display);font-weight:700;font-size:14px;color:#fff;background:var(--blue);border:none;border-radius:9px;padding:11px 20px;cursor:pointer;}
@@ -196,7 +204,7 @@
     </svg>
     <div class="eyebrow">WEBSITE &amp; DIGITAL PHILANTHROPY PLATFORM · ACTION PLAN</div>
     <h1>What we do <span class="hl">next.</span></h1>
-    <p class="lede">The discovery documents are built. Now we run discovery — Stage 1 of the ten-week Phase 1 — and turn it into the first three deliverables. Work through the steps in order — each one tells you <b>what to do, who owns it, and what it unlocks</b>. Set each step's state — click a box once for <b>In progress</b>, again for <b>Done</b> — then press <b>Publish to client</b> to update the client's page. Your edits autosave in this browser until you publish.</p>
+    <p class="lede">The discovery documents are built. Now we run discovery — Stage 1 of the ten-week Phase 1 — and turn it into the first three deliverables. Work through the steps in order — each one tells you <b>what to do, who owns it, and what it unlocks</b>. Mark each step <b>In progress</b> or <b>Done</b> with its buttons, then press <b>Publish to client</b> to update the client's page. Your edits autosave in this browser until you publish.</p>
   </header>
 
   <!-- dynamic "do this now" banner -->
@@ -428,8 +436,16 @@ function order(){
   BUILD.forEach((st,si)=>st.steps.forEach((sp,j)=>o.push({id:'b'+si+'_'+j, label:st.n+'.'+(j+1)+' '+sp.t, owner:sp.owner})));
   return o;
 }
-// Cycle a step: pending -> in progress -> done -> pending.
-function cycle(id){ const s=state[id]; state[id]= s==="done"?undefined : s==="progress"?"done" : "progress"; if(!state[id]) delete state[id]; save(); render(); }
+// Explicit controls: each step has an "In progress" and a "Done" toggle button.
+// Tapping the active one again clears it back to pending.
+function setState(id, target){ state[id] = (state[id]===target ? undefined : target); if(!state[id]) delete state[id]; save(); render(); }
+function toggleHTML(st){
+  return '<div class="statetoggle">'+
+    '<button type="button" class="stbtn prog'+(st==='progress'?' on':'')+'" data-act="progress" aria-pressed="'+(st==='progress')+'">In progress</button>'+
+    '<button type="button" class="stbtn done'+(st==='done'?' on':'')+'" data-act="done" aria-pressed="'+(st==='done')+'">Done</button>'+
+  '</div>';
+}
+function bindToggle(el, id){ el.querySelectorAll('.statetoggle .stbtn').forEach(function(b){ b.addEventListener('click', function(){ setState(id, b.dataset.act); }); }); }
 
 function render(){
   [1,2,3,4].forEach(g=>{ document.getElementById('grp-'+g).innerHTML=''; });
@@ -438,10 +454,8 @@ function render(){
     const el=document.createElement('div');
     el.className='step'+(done?' done':prog?' inprog':''); el.dataset.id=id;
     const pill=prog?'<span class="ipill">IN PROGRESS</span>':'';
-    el.innerHTML='<div class="num">'+(i+1)+'</div><div class="body"><div class="top"><div class="title">'+s.t+'</div><div class="topright">'+pill+estChip('d'+i)+'<div class="owner '+s.o+'">'+s.owner+'</div></div></div><div class="desc">'+s.d+'</div><div class="unlocks"><b>Unlocks →</b> '+s.u+'</div></div><div class="chk" role="checkbox" aria-checked="'+(done?'true':prog?'mixed':'false')+'" tabindex="0">'+chkSVG+'</div>';
-    const c=el.querySelector('.chk');
-    c.addEventListener('click',()=>cycle(id));
-    c.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){e.preventDefault();cycle(id);} });
+    el.innerHTML='<div class="num">'+(i+1)+'</div><div class="body"><div class="top"><div class="title">'+s.t+'</div><div class="topright">'+pill+estChip('d'+i)+'<div class="owner '+s.o+'">'+s.owner+'</div></div></div><div class="desc">'+s.d+'</div><div class="unlocks"><b>Unlocks →</b> '+s.u+'</div>'+toggleHTML(sst)+'</div>';
+    bindToggle(el, id);
     document.getElementById('grp-'+s.g).appendChild(el);
   });
   const g4=document.getElementById('grp-4');
@@ -452,14 +466,10 @@ function render(){
     st.steps.forEach((sp,j)=>{
       const id='b'+si+'_'+j, sst=state[id], d=sst==='done', prog=sst==='progress';
       const pill=prog?'<span class="sipill">IN PROGRESS</span>':'';
-      h+='<div class="substep'+(d?' done':prog?' inprog':'')+'" data-id="'+id+'"><div class="schk" role="checkbox" aria-checked="'+(d?'true':prog?'mixed':'false')+'" tabindex="0">'+chkSVG+'</div><span class="six">'+st.n+'.'+(j+1)+'</span><div class="sbody"><div class="stitle">'+sp.t+'</div><div class="snote">'+sp.note+'</div>'+(sp.tech?'<div class="sstack"><span>STACK</span> '+sp.tech+'</div>':'')+'</div>'+estChip(id)+pill+'<span class="sowner '+sp.o+'">'+sp.owner+'</span></div>';
+      h+='<div class="substep'+(d?' done':prog?' inprog':'')+'" data-id="'+id+'"><span class="six">'+st.n+'.'+(j+1)+'</span><div class="sbody"><div class="stitle">'+sp.t+'</div><div class="snote">'+sp.note+'</div>'+(sp.tech?'<div class="sstack"><span>STACK</span> '+sp.tech+'</div>':'')+toggleHTML(sst)+'</div>'+estChip(id)+pill+'<span class="sowner '+sp.o+'">'+sp.owner+'</span></div>';
     });
     h+='</div>'; block.innerHTML=h;
-    block.querySelectorAll('.substep').forEach(row=>{
-      const id=row.dataset.id, chk=row.querySelector('.schk');
-      chk.addEventListener('click',()=>cycle(id));
-      chk.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){e.preventDefault();cycle(id);} });
-    });
+    block.querySelectorAll('.substep').forEach(row=>{ bindToggle(row, row.dataset.id); });
     g4.appendChild(block);
   });
   updateMeta();
