@@ -16,7 +16,7 @@
               Build sub-steps  b<stage>_<item>  (stage 0–5, e.g. b0_3, b2_10)
    ============================================================ */
 window.GGF_PROGRESS = {
-  updated: "5 June 2026",
-  completed: ["d0", "d1", "d2", "d3"],
-  inProgress: ["d4"]
+  updated: "12 June 2026",
+  completed: ["d0", "d1", "d2", "d3", "d4"],
+  inProgress: []
 };
