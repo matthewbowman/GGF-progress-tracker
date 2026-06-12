@@ -154,6 +154,7 @@
 // Completion state + date come from the shared progress.js (single source of truth).
 const UPDATED = (window.GGF_PROGRESS && window.GGF_PROGRESS.updated) || "5 June 2026";
 const COMPLETED = (window.GGF_PROGRESS && window.GGF_PROGRESS.completed) || ["d0","d1","d2","d3"];
+const INPROGRESS = (window.GGF_PROGRESS && window.GGF_PROGRESS.inProgress) || [];
 
 const PHASES = [
   {t:"Getting started", sub:"Discovery & strategy", items:[
@@ -232,6 +233,7 @@ const PHASES = [
 ];
 
 const stateDone = id => COMPLETED.includes(id);
+const stateProg = id => INPROGRESS.includes(id) && !stateDone(id);
 const checkSVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.2 4.3L19 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 // flat order for "next" + counts
@@ -239,12 +241,18 @@ const flat=[]; PHASES.forEach((p,pi)=>p.items.forEach((it,ii)=>flat.push({...it,
 const total=flat.length;
 const doneCount=flat.filter(f=>stateDone(f.id)).length;
 const nextItem=flat.find(f=>!stateDone(f.id));
+// Items explicitly marked "in progress"; if none chosen, fall back to the next unfinished step.
+const progItems=flat.filter(f=>stateProg(f.id));
+const anchor=progItems[0]||nextItem;
+const currentIds=new Set((progItems.length?progItems:(nextItem?[nextItem]:[])).map(f=>f.id));
+const isCur=id=>currentIds.has(id);
 const pctNum=Math.round(doneCount/total*100);
 
 document.getElementById('upd').textContent=UPDATED;
 document.getElementById('pct').innerHTML='0<small>%</small>';
-document.getElementById('nowline').innerHTML = nextItem
-  ? 'Currently working on: <b>'+nextItem.t+'</b>'
+const curLabel = progItems.length ? progItems.map(p=>p.t).join(' · ') : (nextItem?nextItem.t:null);
+document.getElementById('nowline').innerHTML = curLabel
+  ? 'Currently working on: <b>'+curLabel+'</b>'
   : '<b>Complete — your site is live.</b>';
 
 // gantt chart — indicative 10-week schedule with overlap
@@ -253,7 +261,7 @@ const WEEKS=10;
 const gh=document.getElementById('g2head');
 for(let w=1;w<=WEEKS;w++){const s=document.createElement('span');s.className='wk';s.textContent=w;gh.appendChild(s);}
 let curPhase=-1;
-PHASES.forEach((p,pi)=>{ if(curPhase===-1 && nextItem && nextItem.pi===pi) curPhase=pi; });
+PHASES.forEach((p,pi)=>{ if(curPhase===-1 && anchor && anchor.pi===pi) curPhase=pi; });
 const rows=document.getElementById('g2rows');
 PHASES.forEach((p,pi)=>{
   const n=p.items.length, d=p.items.filter(it=>stateDone(it.id)).length;
@@ -277,18 +285,18 @@ document.getElementById('g2flag').textContent='We are here · '+pctNum+'%';
 const wrap=document.getElementById('phases');
 PHASES.forEach((p,pi)=>{
   const n=p.items.length, d=p.items.filter(it=>stateDone(it.id)).length;
-  const isDone=d===n, isCurrent=!isDone && nextItem && nextItem.pi===pi;
+  const isDone=d===n, isCurrent=!isDone && pi===curPhase;
   const sec=document.createElement('div'); sec.className='phase';
   let h='<div class="phasehead"><span class="phasenum'+(isDone?' done':isCurrent?' current':'')+'">'+(pi+1)+'</span>'+
         '<div><div class="phasetitle">'+p.t+'</div></div>'+
         '<span class="phasetally'+(isDone?' done':'')+'">'+d+' / '+n+'</span></div><div class="phaserule"></div><div class="items">';
   p.items.forEach(it=>{
     const done=stateDone(it.id);
-    const isNext = nextItem && nextItem.id===it.id;
-    const cls = done?'done':isNext?'current':'pending';
-    const statusTxt = done?'DONE':isNext?'IN PROGRESS':'UPCOMING';
+    const cur = !done && isCur(it.id);
+    const cls = done?'done':cur?'current':'pending';
+    const statusTxt = done?'DONE':cur?'IN PROGRESS':'UPCOMING';
     const whoTxt = it.who==='us'?'US':it.who==='ggf'?'GGF':'TOGETHER';
-    h+='<div class="item '+(done?'done':isNext?'current':'')+'">'+
+    h+='<div class="item '+(done?'done':cur?'current':'')+'">'+
          '<div class="dot '+cls+'">'+(done?checkSVG:'')+'</div>'+
          '<div class="ibody"><div class="ititle">'+it.t+'</div><div class="inote">'+it.note+'</div></div>'+
          '<span class="who '+it.who+'">'+whoTxt+'</span>'+
