@@ -6,31 +6,30 @@ Static site on GitHub Pages.
 - **`tracker.html`** — your internal control panel: set each step's state and publish.
 - **`progress.js`** — the single source of truth both pages read (`completed`, `inProgress`, `updated`).
 
-## How you update it (normal workflow)
+## How you update it
 
-1. Open **`tracker.html`**.
-2. Click a step's box: once = **In progress**, again = **Done**, again = back to Pending.
-3. Click **Publish to client**. That writes `progress.js` back to this repo, GitHub Pages
-   redeploys, and the client page updates in ~1–2 minutes.
+1. Open **`tracker.html`** (works on phone or computer).
+2. For each step, tap **In progress** or **Done** (tap again to clear it).
+3. Tap **Publish to client**. The client page updates in ~1–2 minutes.
 
-Your edits autosave in your browser until you publish, so a half-finished update is never lost.
+That's it — no tokens, no setup, no terminal. Your edits autosave in your browser until you publish.
 
-## One-time setup for one-click publishing
+## How publishing works (for future reference)
 
-Publishing needs permission to write to this repo. In `tracker.html` → **⚙ Settings**:
+Tapping **Publish to client** POSTs the new state to a small serverless endpoint, which
+commits `progress.js` back to this repo. GitHub Pages then redeploys both pages.
 
-1. Click **Create a fine-grained token** (opens GitHub).
-2. Repository access → **Only select repositories** → `GGF-progress-tracker`.
-3. Permissions → **Contents** → **Read and write**.
-4. Generate, copy the token, paste it into the token field, and **Save token**.
+- **Endpoint:** `https://ggf-publish.vercel.app/api/publish` (Vercel project `ggf-publish`,
+  under the "Matthew Bowman's projects" team).
+- The GitHub credential lives **only** in the Vercel function's environment variables
+  (`GITHUB_TOKEN`), never in the browser. A `PUBLISH_KEY` gates the endpoint.
+- Function source is kept at `…/GGF Website Redesign/publish-api/api/publish.js`.
+  Redeploy with: `vercel deploy --prod --yes --scope team_6lR1Yjr1x9pFXOuUv5gZ4Sdu`
 
-The token is stored only in your browser (localStorage) and is never committed. Scope it to this
-one repo so that's the most it can ever touch. Give it an expiry and recreate it when it lapses.
+**Manual backup:** if the endpoint is ever down, the tracker's ⚙ Settings shows the exact
+`progress.js` text with a Copy button and a link to edit the file directly on GitHub.
 
-**No token?** The Publish button still works — it shows the new `progress.js` text with a Copy
-button and a link to edit the file directly on GitHub. Paste, commit, done.
-
-## Step ids (if you ever edit `progress.js` by hand)
+## Step ids (only needed if editing `progress.js` by hand)
 
 - Discovery steps: `d0` … `d11`
 - Build sub-steps: `b<stage>_<item>` (stage 0–5), e.g. `b0_3`, `b2_10`
