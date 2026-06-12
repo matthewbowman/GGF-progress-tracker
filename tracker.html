@@ -153,7 +153,33 @@
   .substep .estchip{font-size:10.5px;padding:3px 9px;margin-top:2px;}
   .sshead .ssdays{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.02em;color:var(--ink-soft);background:#F1EFE8;border-radius:6px;padding:4px 10px;margin-left:10px;}
   .sshead .ssdays::before{content:"◷ ";}
-  @media(max-width:560px){h1{font-size:38px;} .header-doodle{display:none;} .wrap{padding:28px 18px 60px;}}
+  @media(max-width:560px){
+    h1{font-size:36px;} .header-doodle{display:none;} .wrap{padding:28px 16px 60px;}
+    .brandrow{flex-wrap:wrap;gap:10px;}
+    .lede{font-size:17px;}
+    /* step cards: title and badges stack; checkbox stays a right-hand tap target */
+    .step{gap:12px;padding:18px 14px;}
+    .step .num{width:32px;height:32px;font-size:15px;}
+    .step .top{flex-wrap:wrap;gap:6px 10px;}
+    .step .title{flex:1 1 100%;}
+    .step .topright{flex-wrap:wrap;}
+    .chk{width:34px;height:34px;}
+    /* sub-stage headers wrap instead of overflowing */
+    .sshead{flex-wrap:wrap;gap:6px 10px;padding:14px 14px;}
+    .sshead .st{flex:1 1 auto;}
+    .sshead .mini{margin-left:auto;}
+    /* sub-steps: meta chips drop to their own line */
+    .substep{flex-wrap:wrap;gap:10px;padding:13px 14px;}
+    .substep .schk{width:30px;height:30px;}
+    .substep .six{min-width:28px;}
+    .substep .sbody{flex:1 1 calc(100% - 82px);}
+    .substep .estchip,.substep .sowner,.substep .sipill{margin-left:0;}
+    /* publish controls */
+    .pubbar{gap:10px;} .pubcog{margin-left:0;}
+    .pubbtn{flex:1 1 auto;}
+    .pubrow{flex-wrap:wrap;}
+    .pubsettings input[type=password]{min-width:0;width:100%;flex:1 1 100%;}
+  }
 </style>
 </head>
 <body>
