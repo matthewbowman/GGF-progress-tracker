@@ -6,6 +6,6 @@
    ============================================================ */
 window.GGF_PROGRESS = {
   updated: "12 June 2026",
-  completed: ["d0", "d1", "d2", "d3", "d4"],
+  completed: ["d0", "d1", "d2", "d3", "d4", "d5"],
   inProgress: []
 };
